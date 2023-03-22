@@ -14,25 +14,24 @@ import {
   AutoAcceptCredential,
   ConnectionsModule,
   CredentialsModule,
+  DidsModule,
   MediatorPickupStrategy,
   ProofsModule,
   RecipientModule,
   V2CredentialProtocol,
   V2ProofProtocol,
 } from '@aries-framework/core'
-import { IndyVdrAnonCredsRegistry, IndyVdrModule, IndyVdrPoolConfig } from '@aries-framework/indy-vdr'
 import { useAgent } from '@aries-framework/react-hooks'
 import { anoncreds } from '@hyperledger/anoncreds-react-native'
 import { ariesAskar } from '@hyperledger/aries-askar-react-native'
-import { indyVdr } from '@hyperledger/indy-vdr-react-native'
+import { CheqdAnonCredsRegistry, CheqdModule, CheqdModuleConfig, CheqdDidRegistrar, CheqdDidResolver } from '@aries-framework/cheqd'
 
 interface GetAgentModulesOptions {
-  indyNetworks: IndyVdrPoolConfig[]
   mediatorInvitationUrl?: string
 }
 
 export type BifoldAgent = Agent<ReturnType<typeof getAgentModules>>
-export function getAgentModules({ indyNetworks, mediatorInvitationUrl }: GetAgentModulesOptions) {
+export function getAgentModules({ mediatorInvitationUrl }: GetAgentModulesOptions) {
   const indyCredentialFormat = new LegacyIndyCredentialFormatService()
   const indyProofFormat = new LegacyIndyProofFormatService()
 
@@ -44,12 +43,20 @@ export function getAgentModules({ indyNetworks, mediatorInvitationUrl }: GetAgen
       anoncreds,
     }),
     anoncreds: new AnonCredsModule({
-      registries: [new IndyVdrAnonCredsRegistry()],
+      registries: [new CheqdAnonCredsRegistry()],
     }),
-    indyVdr: new IndyVdrModule({
-      indyVdr,
-      networks: indyNetworks as [IndyVdrPoolConfig],
-    }),
+    dids: new DidsModule({
+        registrars: [new CheqdDidRegistrar()],
+        resolvers: [new CheqdDidResolver()],
+      }),
+    cheqdSdk: new CheqdModule(new CheqdModuleConfig({
+        networks: [
+          {
+            network: 'testnet',
+            cosmosPayerSeed: 'sketch mountain erode window enact net enrich smoke claim kangaroo another visual write meat latin bacon pulp similar forum guilt father state erase bright',
+          },
+        ],
+      })),
     connections: new ConnectionsModule({
       autoAcceptConnections: true,
     }),
