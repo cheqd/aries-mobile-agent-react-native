@@ -48,6 +48,19 @@ module.exports = (async () => {
       extraNodeModules: extraNodeModules,
       assetExts: assetExts.filter((ext) => ext !== 'svg'),
       sourceExts: [...sourceExts, 'svg', 'cjs'],
+      resolveRequest: (context, moduleName, platform) => {
+        if(moduleName == 'crypto') {
+            return {
+                filePath: __dirname + '/node_modules/@cosmjs/crypto/build/index.js',
+                type: 'sourceFile',
+              };
+        }
+
+        return require('metro-resolver').resolve({
+            ...context,
+            resolveRequest:undefined
+          },moduleName,platform);
+      }
     },
     watchFolders,
   };

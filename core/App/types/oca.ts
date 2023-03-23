@@ -1,4 +1,6 @@
-import { CredentialExchangeRecord, CredentialMetadataKeys } from '@aries-framework/core'
+// TODO: export this from @aries-framework/anoncreds
+import { AnonCredsCredentialMetadataKey } from '@aries-framework/anoncreds/build/utils/metadata'
+import { CredentialExchangeRecord } from '@aries-framework/core'
 import startCase from 'lodash.startcase'
 
 import { parseCredDefFromId } from '../utils/cred-def'
@@ -257,10 +259,8 @@ export class OCABundleResolver implements OCABundleResolverType {
   }
 
   public resolveDefaultBundle(credential: CredentialExchangeRecord, language = 'en'): Promise<OCABundle | undefined> {
-    const credentialDefinitionId = credential.metadata.get(
-      CredentialMetadataKeys.IndyCredential
-    )?.credentialDefinitionId
-    const schemaId = credential.metadata.get(CredentialMetadataKeys.IndyCredential)?.schemaId
+    const credentialDefinitionId = credential.metadata.get(AnonCredsCredentialMetadataKey)?.credentialDefinitionId
+    const schemaId = credential.metadata.get(AnonCredsCredentialMetadataKey)?.schemaId
     return this.getDefaultBundle({
       credDefId: credentialDefinitionId,
       schemaId,
@@ -297,10 +297,8 @@ export class OCABundleResolver implements OCABundleResolverType {
   }
 
   public resolve(credential: CredentialExchangeRecord, language = 'en'): Promise<OCABundle | undefined> {
-    const credentialDefinitionId = credential.metadata.get(
-      CredentialMetadataKeys.IndyCredential
-    )?.credentialDefinitionId
-    const schemaId = credential.metadata.get(CredentialMetadataKeys.IndyCredential)?.schemaId
+    const credentialDefinitionId = credential.metadata.get(AnonCredsCredentialMetadataKey)?.credentialDefinitionId
+    const schemaId = credential.metadata.get(AnonCredsCredentialMetadataKey)?.schemaId
 
     return this.resolveByCredDefOrSchema(credentialDefinitionId, schemaId, language)
   }

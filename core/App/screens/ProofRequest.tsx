@@ -1,17 +1,12 @@
 import type { StackScreenProps } from '@react-navigation/stack'
 
 import {
-  IndyProofFormat,
-  IndyRetrievedCredentialsFormat,
-  ProofExchangeRecord,
-  RequestedAttribute,
-  RequestedPredicate,
-} from '@aries-framework/core'
-import {
-  FormatRetrievedCredentialOptions,
-  GetFormatDataReturn,
-} from '@aries-framework/core/build/modules/proofs/models/ProofServiceOptions'
-import { useAgent, useConnectionById, useProofById } from '@aries-framework/react-hooks'
+  AnonCredsCredentialsForProofRequest,
+  AnonCredsRequestedAttributeMatch,
+  AnonCredsRequestedPredicateMatch,
+} from '@aries-framework/anoncreds'
+import { ProofExchangeRecord } from '@aries-framework/core'
+import { useConnectionById, useProofById } from '@aries-framework/react-hooks'
 import React, { useState, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, StyleSheet, Text, DeviceEventEmitter, FlatList } from 'react-native'
@@ -30,13 +25,14 @@ import { DeclineType } from '../types/decline'
 import { BifoldError } from '../types/error'
 import { NotificationStackParams, Screens } from '../types/navigators'
 import { ProofCredentialItems } from '../types/record'
+import { useAppAgent } from '../utils/agent'
 import { processProofAttributes, processProofPredicates } from '../utils/helpers'
 import { testIdWithKey } from '../utils/testable'
 
 import ProofRequestAccept from './ProofRequestAccept'
 
 type ProofRequestProps = StackScreenProps<NotificationStackParams, Screens.ProofRequest>
-type Fields = Record<string, RequestedAttribute[] | RequestedPredicate[]>
+type Fields = Record<string, AnonCredsRequestedAttributeMatch[] | AnonCredsRequestedPredicateMatch[]>
 
 const ProofRequest: React.FC<ProofRequestProps> = ({ navigation, route }) => {
   if (!route?.params) {
@@ -44,7 +40,7 @@ const ProofRequest: React.FC<ProofRequestProps> = ({ navigation, route }) => {
   }
 
   const { proofId } = route?.params
-  const { agent } = useAgent()
+  const { agent } = useAppAgent()
   const { t } = useTranslation()
   const { assertConnectedNetwork } = useNetwork()
 
@@ -54,7 +50,7 @@ const ProofRequest: React.FC<ProofRequestProps> = ({ navigation, route }) => {
     : proof?.connectionId ?? ''
 
   const [pendingModalVisible, setPendingModalVisible] = useState(false)
-  const [retrievedCredentials, setRetrievedCredentials] = useState<IndyRetrievedCredentialsFormat>()
+  const [retrievedCredentials, setRetrievedCredentials] = useState<AnonCredsCredentialsForProofRequest>()
   const [proofItems, setProofItems] = useState<ProofCredentialItems[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
@@ -132,25 +128,19 @@ const ProofRequest: React.FC<ProofRequestProps> = ({ navigation, route }) => {
     }
     setLoading(true)
 
-    const retrieveCredentialsForProof = async (
-      proof: ProofExchangeRecord
-    ): Promise<
-      | {
-          format: GetFormatDataReturn<[IndyProofFormat]>
-          credentials: FormatRetrievedCredentialOptions<[IndyProofFormat]>
-        }
-      | undefined
-    > => {
+    const retrieveCredentialsForProof = async (proof: ProofExchangeRecord) => {
       try {
         const format = await agent.proofs.getFormatData(proof.id)
-        const credentials = await agent.proofs.getRequestedCredentialsForProofRequest({
+        const credentials = await agent.proofs.getCredentialsForRequest({
           proofRecordId: proof.id,
-          config: {
-            // Setting `filterByNonRevocationRequirements` to `false` returns all
-            // credentials even if they are revokable (and revoked). We need this to
-            // be able to show why a proof cannot be satisfied. Otherwise we can only
-            // show failure.
-            filterByNonRevocationRequirements: false,
+          proofFormats: {
+            indy: {
+              // Setting `filterByNonRevocationRequirements` to `false` returns all
+              // credentials even if they are revokable (and revoked). We need this to
+              // be able to show why a proof cannot be satisfied. Otherwise we can only
+              // show failure.
+              filterByNonRevocationRequirements: false,
+            },
           },
         })
 
@@ -177,7 +167,7 @@ const ProofRequest: React.FC<ProofRequestProps> = ({ navigation, route }) => {
         const attributes = processProofAttributes(format.request, credentials)
         const predicates = processProofPredicates(format.request, credentials)
 
-        setRetrievedCredentials(credentials.proofFormats.indy)
+        setRetrievedCredentials(credentials.proofFormats.anoncreds ?? credentials.proofFormats.indy)
         const groupedProof = Object.values({ ...attributes, ...predicates })
         setProofItems(groupedProof)
         setLoading(false)
@@ -190,8 +180,8 @@ const ProofRequest: React.FC<ProofRequestProps> = ({ navigation, route }) => {
 
   const hasAvailableCredentials = (credName?: string): boolean => {
     const fields: Fields = {
-      ...retrievedCredentials?.requestedAttributes,
-      ...retrievedCredentials?.requestedPredicates,
+      ...retrievedCredentials?.attributes,
+      ...retrievedCredentials?.predicates,
     }
 
     // TODO:(jl) Need to test with partial match? Maybe `.some` would work?
@@ -214,10 +204,10 @@ const ProofRequest: React.FC<ProofRequestProps> = ({ navigation, route }) => {
 
       const automaticRequestedCreds =
         retrievedCredentials &&
-        (await agent.proofs.autoSelectCredentialsForProofRequest({
+        (await agent.proofs.selectCredentialsForRequest({
           proofRecordId: proof.id,
-          config: {
-            filterByPresentationPreview: true,
+          proofFormats: {
+            indy: {},
           },
         }))
 

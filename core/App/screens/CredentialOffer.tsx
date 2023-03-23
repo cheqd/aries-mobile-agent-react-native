@@ -1,5 +1,7 @@
-import { CredentialMetadataKeys, CredentialPreviewAttribute } from '@aries-framework/core'
-import { useAgent, useCredentialById } from '@aries-framework/react-hooks'
+// TODO: export this from @aries-framework/anoncreds
+import { AnonCredsCredentialMetadataKey } from '@aries-framework/anoncreds/build/utils/metadata'
+import { CredentialPreviewAttribute } from '@aries-framework/core'
+import { useCredentialById } from '@aries-framework/react-hooks'
 import { StackScreenProps } from '@react-navigation/stack'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -21,7 +23,8 @@ import { BifoldError } from '../types/error'
 import { NotificationStackParams, Screens } from '../types/navigators'
 import { CardLayoutOverlay11, CredentialOverlay } from '../types/oca'
 import { Field } from '../types/record'
-import { isValidIndyCredential } from '../utils/credential'
+import { useAppAgent } from '../utils/agent'
+import { isValidAnonCredsCredential } from '../utils/credential'
 import { getCredentialConnectionLabel } from '../utils/helpers'
 import { testIdWithKey } from '../utils/testable'
 
@@ -36,7 +39,7 @@ const CredentialOffer: React.FC<CredentialOfferProps> = ({ navigation, route }) 
 
   const { credentialId } = route.params
 
-  const { agent } = useAgent()
+  const { agent } = useAppAgent()
   const { t, i18n } = useTranslation()
   const { ListItems, ColorPallet } = useTheme()
   const { assertConnectedNetwork } = useNetwork()
@@ -84,7 +87,7 @@ const CredentialOffer: React.FC<CredentialOfferProps> = ({ navigation, route }) 
   }, [])
 
   useEffect(() => {
-    if (!(credential && isValidIndyCredential(credential))) {
+    if (!(credential && isValidAnonCredsCredential(credential))) {
       return
     }
 
@@ -92,10 +95,17 @@ const CredentialOffer: React.FC<CredentialOfferProps> = ({ navigation, route }) 
       const { ...formatData } = await agent?.credentials.getFormatData(credential.id)
       const { offer, offerAttributes } = formatData
 
-      credential.metadata.add(CredentialMetadataKeys.IndyCredential, {
-        schemaId: offer?.indy?.schema_id,
-        credentialDefinitionId: offer?.indy?.cred_def_id,
-      })
+      if (offer?.indy) {
+        credential.metadata.add(AnonCredsCredentialMetadataKey, {
+          schemaId: offer?.indy?.schema_id,
+          credentialDefinitionId: offer?.indy?.cred_def_id,
+        })
+      } else if (offer?.anoncreds) {
+        credential.metadata.add(AnonCredsCredentialMetadataKey, {
+          schemaId: offer?.anoncreds?.schema_id,
+          credentialDefinitionId: offer?.anoncreds?.cred_def_id,
+        })
+      }
 
       if (offerAttributes) {
         credential.credentialAttributes = [...offerAttributes.map((item) => new CredentialPreviewAttribute(item))]

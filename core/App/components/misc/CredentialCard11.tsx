@@ -2,7 +2,7 @@ import { CredentialExchangeRecord } from '@aries-framework/core'
 import startCase from 'lodash.startcase'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FlatList, Dimensions, Image, ImageBackground, StyleSheet, Text, View, ViewStyle } from 'react-native'
+import { Dimensions, FlatList, Image, ImageBackground, StyleSheet, Text, View, ViewStyle } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import Icon from 'react-native-vector-icons/MaterialIcons'
 
@@ -12,7 +12,7 @@ import { CredentialStatus } from '../../types/credential-status'
 import { GenericFn } from '../../types/fn'
 import { CardLayoutOverlay11, CredentialOverlay } from '../../types/oca'
 import { Attribute, Field, Predicate } from '../../types/record'
-import { credentialTextColor, isValidIndyCredential, toImageSource } from '../../utils/credential'
+import { credentialTextColor, isValidAnonCredsCredential, toImageSource } from '../../utils/credential'
 import { testIdWithKey } from '../../utils/testable'
 
 interface CredentialCard11Props {
@@ -174,7 +174,7 @@ const CredentialCard11: React.FC<CredentialCard11Props> = ({
         i18n.language
       )
 
-      if (credential && isValidIndyCredential(credential)) {
+      if (credential && isValidAnonCredsCredential(credential)) {
         bundle = await OCABundleResolver.resolve(credential, i18n.language)
         defaultBundle = await OCABundleResolver.resolveDefaultBundle(credential, i18n.language)
       }

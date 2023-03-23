@@ -1,3 +1,10 @@
+// NOTE: We need to import these to be able to use the AskarWallet in this file.
+import '@hyperledger/aries-askar-react-native'
+// eslint-disable-next-line import/no-extraneous-dependencies
+import 'reflect-metadata'
+
+import { AskarWallet } from '@aries-framework/askar'
+import { ConsoleLogger, LogLevel, SigningProviderRegistry } from '@aries-framework/core'
 import { agentDependencies } from '@aries-framework/react-native'
 import React, { createContext, useContext, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -85,10 +92,21 @@ export const AuthProvider: React.FC = ({ children }) => {
     }
 
     const hash = await hashPIN(PIN, secret.salt)
-
     try {
-      await agentDependencies.indy.openWallet({ id: secret.id }, { key: hash })
-      // need full secret in volatile memory in case user wants to fall back to using PIN
+      // NOTE: a custom wallet is used to check if the wallet key is correct. This is different from the wallet used in the rest of the app.
+      // We create an AskarWallet instance and open the wallet with the given secret.
+      const askarWallet = new AskarWallet(
+        new ConsoleLogger(LogLevel.off),
+        new agentDependencies.FileSystem(),
+        new SigningProviderRegistry([])
+      )
+      await askarWallet.open({
+        id: secret.id,
+        key: hash,
+      })
+
+      await askarWallet.close()
+
       const fullSecret = await secretForPIN(PIN, secret.salt)
       setWalletSecret(fullSecret)
       return true
