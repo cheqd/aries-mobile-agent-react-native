@@ -2,6 +2,7 @@
 /**
  * @format
  */
+import './shim'
 import 'react-native-gesture-handler'
 // remove these when updated to react-native 0.65.0
 import '@formatjs/intl-getcanonicallocales/polyfill'

@@ -89,7 +89,7 @@
     "@aries-framework/anoncreds": "npm:@daevm/aries-framework-anoncreds@0.3.4",
     "@aries-framework/anoncreds-rs": "npm:@daevm/aries-framework-anoncreds-rs@0.3.3",
     "@aries-framework/askar": "npm:@daevm/aries-framework-askar@0.3.4",
-    "@aries-framework/cheqd": "npm:@daevm/aries-framework-cheqd@0.2.1",
+    "@aries-framework/cheqd": "npm:@daevm/aries-framework-cheqd@0.3.6",
     "@aries-framework/core": "npm:@daevm/aries-framework-core@0.3.3",
     "@aries-framework/indy-vdr": "^0.4.0-alpha.81",
     "@aries-framework/react-hooks": "^0.4.0",
